@@ -8,7 +8,7 @@
 #    https://github.com/billw2/rpi-clone
 
 ############################################################
-# Alberto Lopez - 2019
+# Albertto Lopez - 2019
 #
 # Implementar --dry-run
 #   reemplazar los siguientes comandos por prints indicando los
@@ -635,6 +635,7 @@ get_src_disk()
 
 # ==== source (booted) disk info and default mount list
 #
+#set -x
 src_boot_dev=`findmnt /boot -o source -n`
 src_root_dev=`findmnt / -o source -n`
 SD_slot_boot=0
@@ -750,7 +751,7 @@ do
 	part_type=$(echo "$line" | cut -d ":" -f 5)
 
 	src_mounted_dir[p]=$(echo "$src_mount_table" \
-						| grep -m 1 -e "^${src_device[p]}" | cut -d " " -f 2)
+						| grep -m 1 -e "^${src_device[p]}\s" | cut -d " " -f 2)
 	if [ "${src_mounted_dir[p]}" != "" ]
 	then
 		src_sync_part[p]=1
@@ -888,11 +889,13 @@ do
 			;;
 		-m|--mountdir)
 			shift
+#      set -x
 			mount_ok=0
 			for ((p = 1; p <= n_src_parts; p++))
 			do
 				if ((!src_exists[p]))
 				then
+#          echo "${src_mounted_dir[p]} not mounted???"
 					continue
 				fi
 				if ((!custom_sync)) && ((p != root_part_num))
@@ -948,6 +951,13 @@ do
 				usage
 			fi
 			dst_disk=$1
+
+      if [ -L "$dst_disk"  ]
+      then
+        dst_disk=$(readlink -f $dst_disk)
+      #  echo "Destination is a symlink.: $dst_disk"
+      fi
+
 			dir=`expr substr $dst_disk 1 5`
 			if [ "$dir" == "/dev/" ]
 			then
@@ -1059,7 +1069,7 @@ do
 	then		# df blocks are 1024 bytes
 		dst_mount_flag[p]=$live
 		blocks=$(echo "$src_df_table" \
-					| grep -m 1 "^${src_device[p]}" | cut -d " " -f 3)
+					| grep -m 1 "^${src_device[p]}\s" | cut -d " " -f 3)
 	# in case intializing, get n_src_parts to compare to dest space
 	elif   ((p == n_src_parts)) \
 	    || ((all_sync)) \
@@ -1419,7 +1429,7 @@ Use -U for unattended even if initializing.
 		read ext_label
 	fi
 
-	start_time=`date '+%H:%M:%S'`
+	start_time=`date '+%d/%m/%y %H:%M:%S'`
 	start_sec=$(date '+%s')
 
 	if [ "${src_mounted_dir[1]}" == "/boot" ]
@@ -1688,7 +1698,7 @@ else
 	fi
 
 	confirm "Ok to proceed with the clone?" "abort"
-	start_time=`date '+%H:%M:%S'`
+	start_time=`date '+%d/%m/%y %H:%M:%S'`
 	start_sec=$(date '+%s')
 fi
 
@@ -1919,7 +1929,7 @@ echo "$date  $HOSTNAME $PGM : clone to $dst_disk ($dst_root_vol_name)" \
 stop_sec=$(date '+%s')
 clone_sec=$((stop_sec - start_sec))
 
-stop_time=`date '+%H:%M:%S'`
+stop_time=`date '+%d/%m/%y %H:%M:%S'`
 
 qecho "==============================="
 qecho "Done with clone to /dev/$dst_disk"
